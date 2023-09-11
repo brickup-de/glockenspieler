@@ -1,0 +1,67 @@
+#include "chimes_note_constants.nxc";
+
+const string filename = "song_hoist_color.dat";
+byte SONG[][] = {
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH},         // #1
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH_DOTTED},  // #2
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_08TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH_DOTTED},  // #3
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_08TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_AS0, HIT_RIGHT,  PAUSE_04TH_DOTTED},  // #4
+  {NOTE_R_AS0, HIT_RIGHT,  PAUSE_08TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_HALF_DOTTED    // #5
+                         + PAUSE_HALF},         // #6
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_HALF},         // #7
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_04TH},         // #8
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_CS1, HIT_RIGHT,  PAUSE_HALF_DOTTED    // #9
+                         + PAUSE_HALF},         // #10
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF},         // #11
+  {NOTE_R_DS1, HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF},         // #12
+  {NOTE_R_F1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF},         // #13
+  {NOTE_R_CS1, HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_HALF_DOTTED    // #14
+                         + PAUSE_HALF_DOTTED},  // #15
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_04TH_DOTTED},  // #16
+  {NOTE_R_F1,  HIT_RIGHT,  PAUSE_08TH},
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_HALF},         // #17
+  {NOTE_R_C1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_HALF_DOTTED    // #18
+                         + PAUSE_HALF_DOTTED},  // #19/20
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_HALF_DOTTED},  // #21
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_HALF_DOTTED},  // #22
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_HALF},         // #23
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_08TH},         // #24
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_08TH + PAUSE_HALF},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_HALF},         // #25
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_F1,  HIT_RIGHT,  PAUSE_04TH},         // #26
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF_DOTTED    // #27
+                         + PAUSE_HALF_DOTTED},  // #28
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF_DOTTED},  // #29
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_HALF_DOTTED},  // #30
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF},         // #31
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_08TH},         // #32
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_08TH + PAUSE_HALF},
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_HALF},         // #33
+  {NOTE_R_F1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_A0,  HIT_RIGHT,  PAUSE_HALF},         // #34 
+  {NOTE_R_C1,  HIT_RIGHT,  PAUSE_04TH},
+  {NOTE_R_D1,  HIT_RIGHT,  PAUSE_HALF_DOTTED},  // #35       
+};
+
+#include "chimes_note_writer.nxc";

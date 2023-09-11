@@ -1,0 +1,74 @@
+#include "chimes_note_constants.nxc";
+
+const string filename = "song_hedwig.dat";
+byte SONG[][] = {
+  {NOTE_R_B0,  HIT_RIGHT,  PAUSE_08TH },        // #0
+  {NOTE_L_E1,  HIT_LEFT,   PAUSE_08TH_DOTTED }, // #1
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_16TH },
+  {NOTE_L_FS1, HIT_LEFT,   PAUSE_08TH },
+  {NOTE_L_E1,  HIT_LEFT,   PAUSE_04TH },        // #2
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_R_A1,  HIT_RIGHT,  PAUSE_04TH_DOTTED }, // #3
+    {NOTE_R_DS1, HIT_NONE,   PAUSE_NONE },
+  {NOTE_L_FS1, HIT_LEFT,   PAUSE_04TH_DOTTED }, // #4
+  {NOTE_L_E1,  HIT_LEFT,   PAUSE_08TH_DOTTED }, // #5
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_16TH },
+  {NOTE_L_FS1, HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_DS1, HIT_RIGHT,  PAUSE_04TH },        // #6
+  {NOTE_L_F1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_B0,  HIT_RIGHT,  PAUSE_04TH_DOTTED + PAUSE_04TH }, // #7/8
+  {NOTE_R_B0,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_L_E1,  HIT_LEFT,   PAUSE_08TH_DOTTED }, // #9
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_16TH },
+  {NOTE_L_FS1, HIT_LEFT,   PAUSE_08TH },
+  {NOTE_L_E1,  HIT_LEFT,   PAUSE_04TH },        // #10
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_R_C2,  HIT_RIGHT,  PAUSE_04TH },        // #11
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_R_AS1, HIT_RIGHT,  PAUSE_04TH },        // #12
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_C2,  HIT_RIGHT,  PAUSE_08TH_DOTTED }, // #13
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_16TH },
+  {NOTE_L_AS1, HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_AS0, HIT_RIGHT,  PAUSE_04TH },        // #14
+    {NOTE_R_E1,  HIT_NONE,   PAUSE_NONE },
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_E1,  HIT_RIGHT,  PAUSE_04TH_DOTTED + PAUSE_04TH }, // #15/16
+    {NOTE_R_B1,  HIT_NONE,   PAUSE_NONE },
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_04TH },        // #17
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_04TH },        // #18
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_C2,  HIT_RIGHT,  PAUSE_04TH },        // #19
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_R_AS1, HIT_RIGHT,  PAUSE_04TH },        // #20
+  {NOTE_L_FS1, HIT_LEFT,   PAUSE_08TH },
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH_DOTTED }, // #21
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_16TH },
+  {NOTE_R_AS1, HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_R_AS0, HIT_RIGHT,  PAUSE_04TH },        // #22
+    {NOTE_L_B1,  HIT_NONE,   PAUSE_NONE },
+  {NOTE_R_B0,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_L_B1,  HIT_LEFT,   PAUSE_04TH_DOTTED + PAUSE_04TH }, // #23/24      4 8 16 16
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_16TH },        // #25
+    {NOTE_L_FS1,  HIT_NONE,  PAUSE_08TH_DOTTED },      // zum Vermeiden des Drifts bei wiederholtem Schlagen
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_16TH },        // #26
+    {NOTE_L_FS1,  HIT_NONE,  PAUSE_08TH_DOTTED }, // zum Vermeiden des Drifts bei wiederholtem Schlagen
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_C2,  HIT_RIGHT,  PAUSE_04TH },        // #27
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_08TH },
+  {NOTE_R_AS1, HIT_RIGHT,  PAUSE_04TH },        // #28
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_C2,  HIT_RIGHT,  PAUSE_08TH_DOTTED }, // #29
+    {NOTE_L_AS1, HIT_NONE,   PAUSE_NONE },
+  {NOTE_R_B1,  HIT_RIGHT,  PAUSE_16TH },
+  {NOTE_L_AS1, HIT_LEFT,   PAUSE_08TH },
+  {NOTE_R_AS0, HIT_RIGHT,  PAUSE_04TH },        // #30
+  {NOTE_L_G1,  HIT_LEFT,   PAUSE_08TH },
+  {NOTE_L_E1,  HIT_LEFT,   PAUSE_04TH_DOTTED }, // #31
+};
+
+#include "chimes_note_writer.nxc";

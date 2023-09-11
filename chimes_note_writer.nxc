@@ -1,0 +1,25 @@
+task main() {
+  TextOut(0, LCD_LINE1, "FILE: " + filename);
+  file_step s;
+  int length = ArrayLen(SONG);
+  int size = SizeOf(s) * length;
+  
+  unsigned int error;
+  byte handle;
+  DeleteFile(filename);
+  error = CreateFile(filename, size, handle);
+  TextOut(0, LCD_LINE2, "CREATE: " + NumToStr(error));
+  
+  for (int i = 0; i < length; i++) {
+    s.note  = SONG[i][INDEX_OF_NOTE];
+    s.hit   = SONG[i][INDEX_OF_HIT];
+    s.pause = SONG[i][INDEX_OF_PAUSE];
+    error = Write(handle, s);
+    TextOut(0, LCD_LINE3, "WRITE: " + NumToStr(error));
+  }
+  
+  error = CloseFile(handle);
+  TextOut(0, LCD_LINE4, "CLOSE: " + NumToStr(error));
+  
+  while(true);
+}

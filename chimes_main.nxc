@@ -1,0 +1,612 @@
+// Constants for communication with remote NXT
+const byte REMOTE_STAY_ALIVE = 0x00;
+const byte REMOTE_CALIBRATE  = 0x01;
+const byte REMOTE_HIT_LEFT   = 0x02;
+const byte REMOTE_HIT_RIGHT  = 0x03;
+const byte REMOTE_HIT_BOTH   = 0x04;
+
+// Timing constants
+const int REMOTE_CALIBRATION_DURATION_IN_MS = 4500;
+const int REMOTE_HIT_DURATION_IN_MS = 150;
+
+const byte DEFAULT_MALLET_MAXIMUM_SPEED = 40;
+const byte SLOW_MALLET_MAXIMUM_SPEED = 20;
+byte MALLET_MAXIMUM_SPEED = 40;
+
+const int DEFAULT_SPEED_OF_32TH_PAUSE = 90;
+int SPEED_OF_32TH_PAUSE = 90;
+
+// Non-existing Output for error handling
+const byte OUT_NONE = 0xFF;
+
+// Note constants
+#include "chimes_note_constants.nxc";
+
+// Music: Turn towars each note
+byte MUSIC_EACH_NOTE[][] = {
+  { NOTE_L_NONE, HIT_NONE, PAUSE_NONE },       
+  { NOTE_R_NONE, HIT_BOTH, PAUSE_04TH },
+};
+
+// Music: Random Accords
+byte MUSIC_RANDOM_ACCORD[][] = {
+  { NOTE_L_NONE, HIT_NONE, PAUSE_NONE },       
+  { NOTE_L_NONE, HIT_BOTH, PAUSE_04TH },
+};
+
+// Music: Songs (Initial speed)
+const int SPEED_DAVY_JONES = 90;
+const int SPEED_FOR_ELISE = 82;
+const int SPEED_HEDWIGS_THEME = 60;
+const int SPEED_HOIST_THE_COLOURS = 40;
+const int SPEED_TETRIS = 33;
+const int SPEED_IMPERIAL_MARCH = 45;
+const int SPEED_SUPER_MARIO = 60;
+//const int SPEED_MMX_TEST = 45;
+const int SPEED_ROCKET = 46;
+
+// Music: Songs (Names of data files)
+const string FILENAME_DAVY_JONES = "song_davy_jones.dat";
+const string FILENAME_FOR_ELISE = "song_for_elise.dat";
+const string FILENAME_HEDWIGS_THEME = "song_hedwig.dat";
+const string FILENAME_HOIST_THE_COLOURS = "song_hoist_cols.dat";
+const string FILENAME_TETRIS = "song_tetris.dat";
+const string FILENAME_IMPERIAL_MARCH = "song_imperial.dat";
+const string FILENAME_SUPER_MARIO = "song_mario.dat";
+const string FILENAME_MMX_TEST = "song_mmx_2.dat"; //"song_mmx_test.dat";
+const string FILENAME_ROCKET = "song_rocket.dat";
+const string FILENAME_VAESTAN = "song_vaestan.dat";
+
+void CheckBluetoothConnection( ){
+  if (BluetoothStatus(CONN_BT1) != NO_ERR) {
+    ClearScreen( );
+    TextOut(0, LCD_LINE1, "No Bluetooth");
+    TextOut(0, LCD_LINE2, "Connect BT_1!");
+    Wait(5000);
+    Stop(true);
+  }
+  
+  ClearScreen( );
+  TextOut(0, LCD_LINE1, "Bluetooth OK");
+  Wait(1000);
+}
+
+void SendRemoteCommand( byte command ){
+  until(BluetoothStatus(CONN_BT1) == NO_ERR);
+  SendRemoteNumber(CONN_BT1, MAILBOX1, command);
+}
+
+byte GetNoteSide( byte note ) {
+  return note & NOTE_SIDE_MASK;
+}
+
+byte GetNoteOutput( byte note ) {
+  switch (GetNoteSide(note)) {
+    case NOTE_LEFT:
+      return OUT_A;
+    case NOTE_RIGHT:
+      return OUT_B;
+    default:
+      return OUT_NONE;
+  }
+}
+
+byte GetNoteHitByte( byte note ) {
+  switch (GetNoteSide(note)) {
+    case NOTE_LEFT:
+      return HIT_LEFT;
+    case NOTE_RIGHT:
+      return HIT_RIGHT;
+    default:
+      return OUT_NONE;
+  }
+}
+
+byte GetNoteIndex( byte note ) {
+  return note & NOTE_INDEX_MASK;
+}
+
+int GetNoteAngle( byte note ) {
+  if (GetNoteSide(note) == NOTE_LEFT) {
+    return NOTE_ANGLES_LEFT[GetNoteIndex(note)];
+  } else {
+    return NOTE_ANGLES_RIGHT[GetNoteIndex(note)];
+  }
+}
+
+void TurnMalletTowards( byte note ) {
+  int angle   = GetNoteAngle(note);
+  byte output = GetNoteOutput(note);
+  if (output == OUT_NONE) {
+    return;
+  }
+
+  int tacho = MotorTachoCount(output);
+  int distance = tacho - angle;
+  if (abs(distance) <= BACKLASH_ANGLE) {
+    return;
+  }
+  
+  // add extra movement for backlash on changing direction  
+  if (distance < 0) {
+    angle += BACKLASH_ANGLE;
+  } else { 
+    angle -= BACKLASH_ANGLE;
+  };
+  
+  // Turn the mallet
+  PosRegSetAngle(output, angle);
+}
+
+void HitMallet( byte hit ) {
+  switch (hit) {
+    case HIT_LEFT:
+      SendRemoteCommand(REMOTE_HIT_LEFT);
+      break;
+    case HIT_RIGHT:
+      SendRemoteCommand(REMOTE_HIT_RIGHT);
+      break;
+    case HIT_BOTH:
+      SendRemoteCommand(REMOTE_HIT_BOTH);
+      break;
+    default:
+      //SendRemoteCommand(REMOTE_STAY_ALIVE);
+      return;
+  }
+  Wait(REMOTE_HIT_DURATION_IN_MS);
+}
+
+void PauseMusicBeforeHitting( byte pause ){
+  Wait( ( pause * SPEED_OF_32TH_PAUSE ) - REMOTE_HIT_DURATION_IN_MS );
+}
+
+void PauseMusic( byte pause ){
+  Wait( pause * SPEED_OF_32TH_PAUSE );
+}
+
+void MoveToInitialPosition( ){
+  PosRegSetAngle(OUT_A, NOTE_ANGLES_LEFT[0]);
+  PosRegSetAngle(OUT_B, NOTE_ANGLES_RIGHT[0]);
+  Wait(2500);
+}
+
+void CalibrateMalletHitting( ){
+  SendRemoteCommand(REMOTE_CALIBRATE);
+  Wait(REMOTE_CALIBRATION_DURATION_IN_MS);
+}
+
+void CalibrateMalletTurning( ){
+  // More finegrained regulation than default (100ms)
+  SetMotorRegulationTime(MS_10);
+  
+  // Rotate mallets slowly until they hit each other
+  OnFwdReg(OUT_A, 12, OUT_REGMODE_IDLE);
+  OnFwdReg(OUT_B, -12, OUT_REGMODE_IDLE);
+  Wait(10000);
+  Off(OUT_AB);
+
+  // Reset motor positions to zero
+  PosRegEnable(OUT_A, PID_3, PID_1, PID_2);
+  PosRegEnable(OUT_B, PID_3, PID_1, PID_2);
+
+  // Regulate maximum motor speeds
+  PosRegSetMax(OUT_A, MALLET_MAXIMUM_SPEED, 0);
+  PosRegSetMax(OUT_B, MALLET_MAXIMUM_SPEED, 0);
+
+  // Move mallets to initial position
+  MoveToInitialPosition( );
+}
+
+void CalibrateMallets( ) {
+  CalibrateMalletHitting( );
+  CalibrateMalletTurning( );
+}
+
+byte PreviousNotePause;
+void PlayMusicStep( byte step[] ) {
+  if ( step[INDEX_OF_NOTE] == NOTE_TEMPO ) {
+		if ( step[INDEX_OF_HIT] == HIT_MS_32TH ) {
+			SPEED_OF_32TH_PAUSE = step[INDEX_OF_PAUSE];
+		}
+		return;
+	}
+
+  TurnMalletTowards( step[INDEX_OF_NOTE] );
+  
+  if ( step[INDEX_OF_PAUSE] == PAUSE_NONE
+    && step[INDEX_OF_HIT]   == HIT_NONE ) {
+    return;
+  }
+  
+  if ( step[INDEX_OF_HIT]   == HIT_NONE ) {
+    PauseMusic( PreviousNotePause );
+  } else {
+    PauseMusicBeforeHitting( PreviousNotePause );
+    HitMallet( step[INDEX_OF_HIT] ); 
+  }
+  
+  PreviousNotePause = step[INDEX_OF_PAUSE];
+};
+
+byte handle;
+void PlayMusicFile( string filename ) {
+  ClearLine(LCD_LINE5);
+  ClearLine(LCD_LINE6);
+  ClearLine(LCD_LINE7);
+  ClearLine(LCD_LINE8);
+
+  // Open File
+  int size;
+  unsigned int error = OpenFileRead(filename, size, handle);
+  TextOut(0, LCD_LINE5, "OPEN: " + NumToStr(error));
+
+  // Prepare pause before first notey
+  if (PreviousNotePause < PAUSE_04TH) {
+     PreviousNotePause = PAUSE_04TH;
+  }
+
+  // Play file step by step, but don't overshoot over EOF
+  file_step s;
+  byte array_step[] = {0,0,0};
+  int step_size = SizeOf(s);
+  while(size >= step_size) {
+    size -= step_size;
+    error = Read(handle, s);
+    TextOut(0, LCD_LINE6, "READ: " + NumToStr(error));
+    if (error <> LDR_SUCCESS) {
+      break;
+    }
+
+    // Play step
+    array_step[INDEX_OF_NOTE]  = s.note;
+    array_step[INDEX_OF_HIT]   = s.hit;
+    array_step[INDEX_OF_PAUSE] = s.pause;
+    PlayMusicStep( array_step );
+    
+    // Allow abort
+    if (ButtonPressed(BTNLEFT, true)) {
+      break;
+    }
+  }
+  
+  // Close file at the end
+  error = CloseFile(handle);
+  TextOut(0, LCD_LINE7, "CLOSE: " + NumToStr(error));
+}
+
+void PlayEachNote( ) {
+  PreviousNotePause = PAUSE_04TH;
+  SPEED_OF_32TH_PAUSE = DEFAULT_SPEED_OF_32TH_PAUSE;
+
+  int length = ArrayLen(NOTES_LEFT);
+  for (int i = 0; i < length; i++) {
+    MUSIC_EACH_NOTE[0][0] = NOTES_LEFT[i];
+    MUSIC_EACH_NOTE[1][0] = NOTES_RIGHT[i];
+
+    PlayMusicStep(MUSIC_EACH_NOTE[0]);
+    PlayMusicStep(MUSIC_EACH_NOTE[1]);
+    
+    if (ButtonPressed(BTNLEFT, true)) {
+      return;
+    }
+  }
+  
+  for (int i = length - 2; i >= 0; i--) {
+    MUSIC_EACH_NOTE[0][0] = NOTES_LEFT[i];
+    MUSIC_EACH_NOTE[1][0] = NOTES_RIGHT[i];
+
+    PlayMusicStep(MUSIC_EACH_NOTE[0]);
+    PlayMusicStep(MUSIC_EACH_NOTE[1]);
+    
+    if (ButtonPressed(BTNLEFT, true)) {
+      return;
+    }
+  }
+}
+
+void PlayRandomNote( ) {
+  PreviousNotePause = PAUSE_04TH;
+  SPEED_OF_32TH_PAUSE = DEFAULT_SPEED_OF_32TH_PAUSE;
+
+  int count = 0;
+  while(!ButtonPressed(BTNLEFT, true) && count++ < 20){
+    int i = Random(ArrayLen(NOTES_RIGHT));
+    MUSIC_EACH_NOTE[0][0] = NOTES_LEFT[i];
+    MUSIC_EACH_NOTE[1][0] = NOTES_RIGHT[i];
+
+    PlayMusicStep(MUSIC_EACH_NOTE[0]);
+    PlayMusicStep(MUSIC_EACH_NOTE[1]);
+    
+    Wait(1000);
+  }
+}
+
+void TurnBackAndForth( ) {
+  PreviousNotePause = PAUSE_04TH;
+  SPEED_OF_32TH_PAUSE = DEFAULT_SPEED_OF_32TH_PAUSE;
+
+  int count = 2 + Random(2);
+  while(!ButtonPressed(BTNLEFT, true) && count-- > 0){
+    TurnMalletTowards(NOTE_L_CS1);
+    TurnMalletTowards(NOTE_R_A1);
+    Wait(2000);
+    TurnMalletTowards(NOTE_L_A0);
+    TurnMalletTowards(NOTE_R_F1);
+    Wait(2000);
+  }
+}
+
+void PlayRandomAccords( ) {
+  PreviousNotePause = PAUSE_04TH;
+  SPEED_OF_32TH_PAUSE = DEFAULT_SPEED_OF_32TH_PAUSE;
+  MALLET_MAXIMUM_SPEED = SLOW_MALLET_MAXIMUM_SPEED;
+  
+  int count = 30 + Random(30);
+  byte step[] = { NOTE_L_NONE, HIT_NONE, PAUSE_NONE };
+  while(!ButtonPressed(BTNLEFT, true) && count-- > 0 ){
+    int i = Random(ArrayLen(ACCORDS));
+
+    step[0] = ACCORDS[i][0];
+    step[1] = GetNoteHitByte( step[0] );
+    step[2] = PAUSE_04TH;
+    PlayMusicStep(step);
+    Wait(50);
+    
+    step[0] = ACCORDS[i][1];
+    step[1] = GetNoteHitByte( step[0] );
+    step[2] = PAUSE_04TH;
+    PlayMusicStep(step);
+    Wait(50);
+
+    step[0] = ACCORDS[i][2];
+    step[1] = GetNoteHitByte( step[0] );
+    step[2] = PAUSE_04TH;
+    PlayMusicStep(step);
+    Wait(50);
+    
+    step[0] = ACCORDS[i][0];
+    step[1] = GetNoteHitByte( step[0] );
+    step[2] = PAUSE_04TH;
+    PlayMusicStep(step);
+    
+    Wait(5000); //10s
+  }
+  
+  MALLET_MAXIMUM_SPEED = DEFAULT_MALLET_MAXIMUM_SPEED;
+}
+
+task KeepConnectionAlive() {
+  while(true) {
+    Wait(100);
+    SendRemoteCommand(REMOTE_STAY_ALIVE);
+  };
+}
+
+int currentMenuEntry = 0;
+inline void ShowMenuEntry(){
+  ClearLine(LCD_LINE3);
+  
+  if (currentMenuEntry < 0) currentMenuEntry = 15;
+  switch(currentMenuEntry){
+    case 1: 
+      TextOut(0, LCD_LINE3, "AUTOPILOT");
+      break;
+    case 2: 
+      TextOut(0, LCD_LINE3, "PLAY EACH");
+      break;
+    case 3:
+      TextOut(0, LCD_LINE3, "PLAY RANDOM");
+      break;
+    case 4:
+      TextOut(0, LCD_LINE3, "PLAY ACCORDS");
+      break;
+    case 5:
+      TextOut(0, LCD_LINE3, "TURN BACK-FORTH");
+      break;
+    case 6: 
+      TextOut(0, LCD_LINE3, "PLAY DAVY");
+      break;
+    case 7: 
+      TextOut(0, LCD_LINE3, "PLAY HARRY");
+      break;
+    case 8:
+      TextOut(0, LCD_LINE3, "PLAY COLOURS");
+      break;
+    case 9:
+      TextOut(0, LCD_LINE3, "PLAY ELISE");
+      break;
+    case 10:
+      TextOut(0, LCD_LINE3, "PLAY TETRIS");
+      break;
+    case 11:
+      TextOut(0, LCD_LINE3, "PLAY IMPERIAL");
+      break;
+    case 12:
+      TextOut(0, LCD_LINE3, "PLAY MARIO");
+      break;
+    case 13:
+      TextOut(0, LCD_LINE3, "PLAY MMX-T");
+      break;
+    case 14:
+      TextOut(0, LCD_LINE3, "PLAY ROCKET");
+      break;
+    case 15:
+      TextOut(0, LCD_LINE3, "PLAY VAESTAN");
+      break;
+    default :
+      currentMenuEntry = 0;
+      TextOut(0, LCD_LINE3, "CALIBRATE");
+      break;
+  };
+  Wait(500);
+}
+
+inline void DoMenuAction() {
+  SPEED_OF_32TH_PAUSE = DEFAULT_SPEED_OF_32TH_PAUSE;
+  MALLET_MAXIMUM_SPEED = DEFAULT_MALLET_MAXIMUM_SPEED;
+  switch(currentMenuEntry){
+    case 0: 
+      CalibrateMallets();
+      break;
+    case 2:
+      MoveToInitialPosition( );
+      PlayEachNote();
+      break;
+    case 3:
+      MoveToInitialPosition( );
+      PlayRandomNote();
+      break;
+    case 4:
+      MoveToInitialPosition( );
+      PlayRandomAccords( );
+      break;
+    case 5:
+      TurnBackAndForth();
+      break;
+    case 6:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_DAVY_JONES;
+      PlayMusicFile(FILENAME_DAVY_JONES);
+      MoveToInitialPosition( );
+      break;
+    case 7:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_HEDWIGS_THEME - 5;
+      PlayMusicFile(FILENAME_HEDWIGS_THEME);
+      SPEED_OF_32TH_PAUSE = SPEED_HEDWIGS_THEME - 15;
+      PlayMusicFile(FILENAME_HEDWIGS_THEME);
+      MoveToInitialPosition( );
+      break;
+    case 8:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_HOIST_THE_COLOURS;
+      PlayMusicFile(FILENAME_HOIST_THE_COLOURS);
+      MoveToInitialPosition( );
+      break;
+    case 9:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_FOR_ELISE;
+      PlayMusicFile(FILENAME_FOR_ELISE);
+      MoveToInitialPosition( );
+      break;
+    case 10:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_TETRIS;
+      PlayMusicFile(FILENAME_TETRIS);
+      MoveToInitialPosition( );
+      break;
+    case 11:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_IMPERIAL_MARCH;
+      PlayMusicFile(FILENAME_IMPERIAL_MARCH);
+      MoveToInitialPosition( );
+      break;
+    case 12:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_SUPER_MARIO;
+      PlayMusicFile(FILENAME_SUPER_MARIO);
+      PlayMusicFile(FILENAME_SUPER_MARIO);
+      MoveToInitialPosition( );
+      break;
+    case 13:
+      MoveToInitialPosition( );
+      //SPEED_OF_32TH_PAUSE = SPEED_MMX_TEST;
+      PlayMusicFile(FILENAME_MMX_TEST);
+      MoveToInitialPosition( );
+      break;
+    case 14:
+      MoveToInitialPosition( );
+      SPEED_OF_32TH_PAUSE = SPEED_ROCKET;
+      PlayMusicFile(FILENAME_ROCKET);
+      MoveToInitialPosition( );
+      break;
+    case 15:
+      MoveToInitialPosition( );
+      PlayMusicFile(FILENAME_VAESTAN);
+      MoveToInitialPosition( );
+      break;
+    case 1:  // AUTOPILOT
+      while (true) {      
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        SPEED_OF_32TH_PAUSE = SPEED_DAVY_JONES - 5;
+        PlayMusicFile(FILENAME_DAVY_JONES);
+        SPEED_OF_32TH_PAUSE = SPEED_DAVY_JONES - 15;
+        PlayMusicFile(FILENAME_DAVY_JONES);
+        
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        SPEED_OF_32TH_PAUSE = SPEED_TETRIS;
+        PlayMusicFile(FILENAME_TETRIS);
+        SPEED_OF_32TH_PAUSE = SPEED_TETRIS - 5;
+        PlayMusicFile(FILENAME_TETRIS);
+        
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        SPEED_OF_32TH_PAUSE = SPEED_HEDWIGS_THEME - 5;
+        PlayMusicFile(FILENAME_HEDWIGS_THEME);
+        SPEED_OF_32TH_PAUSE = SPEED_HEDWIGS_THEME - 15;
+        PlayMusicFile(FILENAME_HEDWIGS_THEME);
+        
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        SPEED_OF_32TH_PAUSE = SPEED_FOR_ELISE;
+        PlayMusicFile(FILENAME_FOR_ELISE);
+        
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        SPEED_OF_32TH_PAUSE = SPEED_IMPERIAL_MARCH + 5;
+        PlayMusicFile(FILENAME_IMPERIAL_MARCH);
+        SPEED_OF_32TH_PAUSE = SPEED_IMPERIAL_MARCH;
+        PlayMusicFile(FILENAME_IMPERIAL_MARCH);
+        
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        SPEED_OF_32TH_PAUSE = SPEED_SUPER_MARIO;
+        PlayMusicFile(FILENAME_SUPER_MARIO);
+        PlayMusicFile(FILENAME_SUPER_MARIO);
+        
+        Wait(1000);
+        MoveToInitialPosition();
+        CalibrateMallets();
+        while (SENSOR_1 != 1) { Wait(50); };
+        //SPEED_OF_32TH_PAUSE = SPEED_MMX_TEST;
+        PlayMusicFile(FILENAME_MMX_TEST);
+      }
+      break;
+    default: 
+      break;
+  };
+}
+
+task main() {
+  SetSensorTouch(IN_1);
+  CheckBluetoothConnection( );
+  ShowMenuEntry();
+  while(true) {
+    if (ButtonPressed(BTNLEFT, true)) {
+      currentMenuEntry--;
+      ShowMenuEntry();
+    } else if (ButtonPressed(BTNRIGHT, true)) {
+      currentMenuEntry++;
+      ShowMenuEntry();
+    } else if (ButtonPressed(BTNCENTER, true)) {
+      DoMenuAction();
+    } else {
+      Wait(50);
+    }
+  }
+}
+

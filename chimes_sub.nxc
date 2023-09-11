@@ -1,0 +1,72 @@
+// Constants for communication with main NXT
+const byte REMOTE_STAY_ALIVE = 0x00;
+const byte REMOTE_CALIBRATE  = 0x01;
+const byte REMOTE_HIT_LEFT   = 0x02;
+const byte REMOTE_HIT_RIGHT  = 0x03;
+const byte REMOTE_HIT_BOTH   = 0x04;
+
+inline void WaitForBluetoothConnection() {
+  until( BluetoothStatus(CONN_BT0) == NO_ERR ) {
+    ClearLine( LCD_LINE1 );
+    TextOut(0, LCD_LINE1, "... no connection ...");
+    Wait(100);
+  }
+  
+  ClearLine( LCD_LINE1 );
+  TextOut(0, LCD_LINE1, "Bluetooth connected!");
+}
+
+byte NextCommand() {
+  long command;
+  until( ReceiveRemoteNumber(MAILBOX1, true, command) == NO_ERR );
+  return command;
+}
+
+inline void CalibrateMalletHitting() {
+  // More finegrained regulation than default (100ms)
+  SetMotorRegulationTime(MS_10);
+
+  // Move mallet hitting motors softly in reverse until they block
+  OnFwdReg(OUT_AB, 10, OUT_REGMODE_IDLE);
+  Wait(2000);
+  
+  // Move forward to real zero position
+  RotateMotor(OUT_AB, 30, -50);
+  Wait(2000);
+
+  // Set zero position and motor speed
+  PosRegEnable(OUT_AB);
+  PosRegSetMax(OUT_AB, 75, 0);
+}
+
+inline void HitMalletLeft() {
+  PosRegAddAngle(OUT_B, -90);
+}
+
+inline void HitMalletRight() {
+  PosRegAddAngle(OUT_A, -90);
+}
+
+task main() {
+  WaitForBluetoothConnection();
+  while(true) {
+    switch(NextCommand())  {
+      case REMOTE_CALIBRATE:
+        CalibrateMalletHitting();
+        break;
+      case REMOTE_HIT_LEFT:
+        HitMalletLeft();
+        break;
+      case REMOTE_HIT_RIGHT:
+        HitMalletRight();
+        break;
+      case REMOTE_HIT_BOTH:
+        HitMalletLeft();
+        HitMalletRight();
+        break;
+      default:
+        break;
+    }
+  }
+}
+
